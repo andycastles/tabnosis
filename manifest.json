@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Tabnosis",
+  "version": "2.0",
+  "description": "Display one or more websites in your new tab with configurable split layout",
+  "chrome_url_overrides": {
+    "newtab": "tabnosis.html"
+  },
+  "permissions": [
+    "declarativeNetRequest",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}
