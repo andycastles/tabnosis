@@ -40,3 +40,7 @@ Click **Save & Apply** to apply the changes.
 
 When two or more URLs are configured, each iframe has a slim handle bar showing its domain. Click the handle bar (or the **⤢** button) to maximise that iframe. The others collapse to a thin strip — click any of them to switch focus. Click **⤡** to restore equal splits.
 
+
+## License
+
+MIT © 2026 Andy Castles
