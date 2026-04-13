@@ -231,7 +231,7 @@
       #settings-close {
         background: none;
         border: none;
-        color: #666;
+        color: #999;
         font-size: 18px;
         cursor: pointer;
         padding: 4px 8px;
@@ -256,7 +256,7 @@
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.09em;
-        color: #666;
+        color: #999;
         margin-bottom: 12px;
       }
 
@@ -386,6 +386,17 @@
         opacity: 0.9;
       }
 
+      /* Screen-reader only utility */
+      .sr-only {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
       /* Panel footer */
       .panel-footer {
         padding: 16px 20px;
@@ -411,7 +422,7 @@
       }
       #settings-cancel {
         background: rgba(255, 255, 255, 0.05);
-        color: #666;
+        color: #aaa;
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 6px;
         font-size: 14px;
@@ -427,13 +438,13 @@
   <body>
     <div id="frames-container" class="horizontal"></div>
 
-    <button id="settings-btn" title="Settings">⚙</button>
+    <button id="settings-btn" aria-label="Open settings" title="Settings">⚙</button>
 
     <div id="settings-overlay">
-      <div id="settings-panel">
+      <div id="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-panel-heading">
         <div class="panel-header">
-          <h2>Settings</h2>
-          <button id="settings-close" title="Close">✕</button>
+          <h2 id="settings-panel-heading">Settings</h2>
+          <button id="settings-close" aria-label="Close settings" title="Close">✕</button>
         </div>
 
         <div class="panel-body">
@@ -441,6 +452,7 @@
             <h3>URLs</h3>
             <div id="url-list"></div>
             <div class="add-row">
+              <label for="url-input" class="sr-only">Add URL</label>
               <input
                 type="url"
                 id="url-input"
@@ -455,15 +467,15 @@
           <div class="panel-section">
             <h3>Split Direction</h3>
             <div class="dir-toggle">
-              <button class="dir-opt selected" id="dir-horizontal">
-                <div class="dir-icon">
+              <button class="dir-opt selected" id="dir-horizontal" aria-pressed="true">
+                <div class="dir-icon" aria-hidden="true">
                   <div class="dir-slab"></div>
                   <div class="dir-slab"></div>
                 </div>
                 Side by side
               </button>
-              <button class="dir-opt" id="dir-vertical">
-                <div class="dir-icon stacked">
+              <button class="dir-opt" id="dir-vertical" aria-pressed="false">
+                <div class="dir-icon stacked" aria-hidden="true">
                   <div class="dir-slab"></div>
                   <div class="dir-slab"></div>
                 </div>
