@@ -6,6 +6,24 @@ let config = { ...DEFAULT_CONFIG };
 let pendingConfig = null; // draft while the settings panel is open
 let maximizedIndex = null;
 
+const FOCUSABLE_SELECTORS = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function trapFocus(e) {
+  if (e.key === 'Escape') { closeSettings(); return; }
+  if (e.key !== 'Tab') return;
+
+  const panel = document.getElementById('settings-panel');
+  const focusable = [...panel.querySelectorAll(FOCUSABLE_SELECTORS)];
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (e.shiftKey) {
+    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+  } else {
+    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+}
+
 // ── Storage ────────────────────────────────────────────────────────────────
 
 async function loadConfig() {
@@ -22,6 +40,10 @@ async function persistConfig() {
 
 // ── Frame rendering ────────────────────────────────────────────────────────
 
+function hostname(url) {
+  try { return new URL(url).hostname; } catch { return url; }
+}
+
 function renderFrames() {
   const container = document.getElementById('frames-container');
   container.innerHTML = '';
@@ -31,14 +53,14 @@ function renderFrames() {
   if (config.urls.length === 0) {
     container.innerHTML = `
       <div id="empty-state">
-        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
           <rect x="3" y="3" width="7" height="7" rx="1"/>
           <rect x="14" y="3" width="7" height="7" rx="1"/>
           <rect x="3" y="14" width="7" height="7" rx="1"/>
           <rect x="14" y="14" width="7" height="7" rx="1"/>
         </svg>
         <p>No URLs configured</p>
-        <p class="hint">Click ⚙ in the bottom-right corner to add URLs</p>
+        <p class="hint">Click the Settings button in the bottom-right corner to add URLs</p>
       </div>`;
     return;
   }
@@ -69,16 +91,13 @@ function createHandle(url, index) {
 
   const title = document.createElement('span');
   title.className = 'frame-title';
-  try {
-    title.textContent = new URL(url).hostname;
-  } catch {
-    title.textContent = url;
-  }
+  title.textContent = hostname(url);
   title.title = url;
 
   const btn = document.createElement('button');
   btn.className = 'max-btn';
   btn.innerHTML = '⤢';
+  btn.setAttribute('aria-label', `Maximize ${hostname(url)}`);
   btn.title = 'Maximize';
 
   handle.appendChild(title);
@@ -97,20 +116,23 @@ function toggleMaximize(index) {
 }
 
 function applyMaximizeState() {
-  document.querySelectorAll('.frame-wrapper').forEach((wrapper, i) => {
+  const wrappers = document.querySelectorAll('.frame-wrapper');
+  wrappers.forEach((wrapper, i) => {
     const btn = wrapper.querySelector('.max-btn');
+    const iframe = wrapper.querySelector('iframe');
+    const label = iframe ? hostname(iframe.src) : String(i + 1);
     wrapper.classList.remove('maximized', 'minimized');
 
     if (maximizedIndex !== null) {
       if (i === maximizedIndex) {
         wrapper.classList.add('maximized');
-        if (btn) { btn.innerHTML = '⤡'; btn.title = 'Restore'; }
+        if (btn) { btn.innerHTML = '⤡'; btn.title = 'Restore'; btn.setAttribute('aria-label', `Restore ${label}`); }
       } else {
         wrapper.classList.add('minimized');
-        if (btn) { btn.innerHTML = '⤢'; btn.title = 'Maximize'; }
+        if (btn) { btn.innerHTML = '⤢'; btn.title = 'Maximize'; btn.setAttribute('aria-label', `Maximize ${label}`); }
       }
     } else {
-      if (btn) { btn.innerHTML = '⤢'; btn.title = 'Maximize'; }
+      if (btn) { btn.innerHTML = '⤢'; btn.title = 'Maximize'; btn.setAttribute('aria-label', `Maximize ${label}`); }
     }
   });
 }
@@ -121,11 +143,14 @@ function openSettings() {
   pendingConfig = { urls: [...config.urls], direction: config.direction };
   refreshSettingsUI();
   document.getElementById('settings-overlay').classList.add('open');
+  document.addEventListener('keydown', trapFocus);
   document.getElementById('url-input').focus();
 }
 
 function closeSettings() {
   document.getElementById('settings-overlay').classList.remove('open');
+  document.removeEventListener('keydown', trapFocus);
+  document.getElementById('settings-btn').focus();
   pendingConfig = null;
 }
 
@@ -145,6 +170,7 @@ function refreshSettingsUI() {
     const removeBtn = document.createElement('button');
     removeBtn.className = 'remove-btn';
     removeBtn.innerHTML = '✕';
+    removeBtn.setAttribute('aria-label', `Remove ${url}`);
     removeBtn.title = 'Remove';
     removeBtn.addEventListener('click', () => {
       pendingConfig.urls.splice(i, 1);
@@ -157,8 +183,13 @@ function refreshSettingsUI() {
   });
 
   // Sync direction buttons
-  document.getElementById('dir-horizontal').classList.toggle('selected', pendingConfig.direction === 'horizontal');
-  document.getElementById('dir-vertical').classList.toggle('selected', pendingConfig.direction === 'vertical');
+  const isH = pendingConfig.direction === 'horizontal';
+  const dirH = document.getElementById('dir-horizontal');
+  const dirV = document.getElementById('dir-vertical');
+  dirH.classList.toggle('selected', isH);
+  dirH.setAttribute('aria-pressed', String(isH));
+  dirV.classList.toggle('selected', !isH);
+  dirV.setAttribute('aria-pressed', String(!isH));
 }
 
 async function saveSettings() {
